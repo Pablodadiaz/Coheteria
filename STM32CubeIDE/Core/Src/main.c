@@ -186,7 +186,7 @@ int main(void)
           uint32_t tiempo_actual = HAL_GetTick();
           float delta_t = (tiempo_actual - tiempo_anterior) / 1000.0f;
 
-          if (delta_t >= 0.05f) { // Ejecutar a 20 Hz
+          if (delta_t >= 0.05f) { // Ejecutar a ~20 Hz
 
               // ACTUALIZAR TIEMPO SIEMPRE ACÁ (Fuera del filtro)
               tiempo_anterior = tiempo_actual;
@@ -208,11 +208,11 @@ int main(void)
               // Rechazo de Imposibles Físicos (Barómetro)
               float v_bruta = (altitud_cruda - h_est) / delta_t;
 
-              // FILTRO CON ANTI-LOCKOUT INCLUIDO
-              if ((v_bruta > -343.0f && v_bruta < 343.0f) || rechazos_consecutivos > 10) {
+              // FILTRO CON ANTI-LOCKOUT DE 40 CICLOS (2 segundos)
+              if ((v_bruta > -343.0f && v_bruta < 343.0f) || rechazos_consecutivos > 40) {
 
                   // Resincronización si veníamos rechazando datos
-                  if (rechazos_consecutivos > 10) {
+                  if (rechazos_consecutivos > 40) {
                       h_est = altitud_cruda;
                       v_est = 0.0f;
                   }
@@ -300,8 +300,11 @@ int main(void)
                           break;
                   }
               } else {
-                  // Si el dato es físicamente imposible, contamos el rechazo
+                  // === MAGIA ACÁ: DEAD RECKONING (Inercia) ===
+                  // El dato es falso. Lo rechazamos, pero NO congelamos la computadora.
+                  // Proyectamos la posición usando la última velocidad conocida.
                   rechazos_consecutivos++;
+                  h_est = h_est + (v_est * delta_t);
               }
           }
     }
