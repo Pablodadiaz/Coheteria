@@ -60,9 +60,10 @@ def procesar_telemetria(tiempo_actual, delta_t, altitud_cruda, accel_z_cruda):
     dato_aceptado = False
 
     # Si la velocidad física es posible (< Mach 1) O si venimos ciegos hace mucho tiempo (Anti-Lockout)
-    if (v_bruta > -343.0 and v_bruta < 343.0) or rechazos_consecutivos > 10:
+    # MODIFICACIÓN: Aumentamos el umbral a 40 (2 segundos de tolerancia al ruido)
+    if (v_bruta > -343.0 and v_bruta < 343.0) or rechazos_consecutivos > 40:
         
-        if rechazos_consecutivos > 10:
+        if rechazos_consecutivos > 40:
             print(f"[{tiempo_actual:.2f}s] ¡ALERTA! Demasiados errores seguidos. Resincronizando computadora con sensor...")
             h_est = altitud_cruda
             v_est = 0.0
@@ -124,6 +125,11 @@ def procesar_telemetria(tiempo_actual, delta_t, altitud_cruda, accel_z_cruda):
     else:
         # El dato es imposible y el contador es bajo: lo rechazamos.
         rechazos_consecutivos += 1
+        
+        # MODIFICACIÓN MAGIA ACÁ (Dead Reckoning): 
+        # No congelamos la computadora. Simulamos que seguimos la trayectoria con la inercia que traíamos.
+        h_est = h_est + (v_est * delta_t) 
+        
         dato_aceptado = False
 
     return dato_aceptado
