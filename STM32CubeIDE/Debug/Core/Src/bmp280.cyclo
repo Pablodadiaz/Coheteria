@@ -1,0 +1,2 @@
+../Core/Src/bmp280.c:6:6:BMP280_Init	1
+../Core/Src/bmp280.c:12:7:BMP280_ReadAltitude	1
