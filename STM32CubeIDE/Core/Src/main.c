@@ -20,7 +20,6 @@
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bmp280.h"
 #include <stdio.h>
@@ -47,7 +46,6 @@ I2C_HandleTypeDef hi2c1;
 
 UART_HandleTypeDef huart1;
 
-/* USER CODE BEGIN PV */
 /* USER CODE BEGIN PV */
 typedef enum {
     ESTADO_ESPERA,
@@ -139,7 +137,6 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  /* USER CODE BEGIN 2 */
   BMP280_Init(&hi2c1);
   HAL_Delay(100);
 
@@ -161,16 +158,15 @@ int main(void)
       Data = 0x10; // Configurar a +/- 8g
       HAL_I2C_Mem_Write(&hi2c1, 0x68<<1, 0x1C, 1, &Data, 1, 1000);
   }
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
+  /* USER CODE BEGIN WHILE */
     while (1)
     {
-      /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-      /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 
           // === 1. LECTURAS DE SENSORES ===
           // Barómetro (BMP280)
@@ -258,7 +254,7 @@ int main(void)
                           if ((altitud_maxima - h_est > 3.0f) && (v_est < -2.0f)) {
                               contador_apogeo++;
                               if (contador_apogeo >= 3) {
-                                  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET); // Drogue
+                                  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET); // Drogue (PA0)
                                   estado_actual = ESTADO_DESCENSO;
                               }
                           } else {
@@ -266,7 +262,7 @@ int main(void)
                           }
 
                           if (tiempo_vuelo >= TIEMPO_BACKUP_APOGEO) {
-                              HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET); // Drogue por Timer
+                              HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET); // Drogue por Timer (PA0)
                               estado_actual = ESTADO_DESCENSO;
                           }
                           break;
@@ -277,12 +273,12 @@ int main(void)
                           float tiempo_vuelo = (HAL_GetTick() - tiempo_despegue) / 1000.0f;
 
                           if (h_est <= 250.0f && altitud_maxima > 250.0f) {
-                              HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET); // Principal
+                              HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET); // Principal (PA1)
                               estado_actual = ESTADO_ATERRIZADO;
                           }
 
                           if (tiempo_vuelo >= TIEMPO_BACKUP_PRINCIPAL) {
-                              HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET); // Principal por Timer
+                              HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET); // Principal por Timer (PA1)
                               estado_actual = ESTADO_ATERRIZADO;
                           }
                           break;
@@ -290,8 +286,8 @@ int main(void)
 
                       case ESTADO_ATERRIZADO:
                           // Apagamos los pirotécnicos para no quemar la placa
+                          HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
                           HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-                          HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
 
                           char reporte[120];
                           sprintf(reporte, "REPORTE DE VUELO\r\nAlt Max: %.2f m\r\nVel Max: %.2f m/s\r\n", altitud_maxima, velocidad_ascenso_max);
@@ -308,7 +304,7 @@ int main(void)
               }
           }
     }
-    /* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
@@ -432,10 +428,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_2, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PA1 PA2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2;
+  /*Configure GPIO pins : PA0 PA1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -467,7 +463,7 @@ void Error_Handler(void)
 #ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
+  * where the assert_param error has occurred.
   * @param  file: pointer to the source file name
   * @param  line: assert_param error line source number
   * @retval None
